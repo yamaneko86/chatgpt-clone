@@ -1,11 +1,46 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '~/styles/Home.module.css'
-
-const inter = Inter({ subsets: ['latin'] })
+import Head from "next/head";
+import { Configuration, OpenAIApi } from "openai";
+import { FormEvent, useState } from "react";
 
 export default function Home() {
+  const [message, setMessage] = useState<string>("");
+  const [messages, setMessages] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  type Message = {
+    sender: string;
+    text: string;
+  };
+
+  const cfg = new Configuration({
+    apiKey: process.env.NEXT_PUBLIC_OPENAI_KEY,
+  });
+
+  const openai = new OpenAIApi(cfg);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    // APIを叩く
+    const res = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: message }],
+    });
+
+    // ユーザーとAIのメッセージをセット
+    setMessages((prevMessages: string[]) => [
+      ...prevMessages,
+      JSON.stringify({ sender: "user", text: message }),
+      JSON.stringify({
+        sender: "ai",
+        text: res.data.choices[0].message?.content,
+      }),
+    ]);
+
+    setIsLoading(false);
+  };
+
   return (
     <>
       <Head>
@@ -14,110 +49,55 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-        <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>src/pages/index.tsx</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
+
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="max-w-lg w-full">
+          <div
+            style={{ height: "600px" }}
+            className="bg-gray-100 w-full p-4 h-96 overflow-scroll rounded-t-lg"
+          >
+            <span className="text-center block font-medium text-2xl border-b-2 border-indigo-400 pb-4 mb-3">
+              ChatGPT-Clone
+            </span>
+            {messages.map((message: any, index) => {
+              return (
+                <div
+                  className={`flex ${
+                    message.sender === "user" ? "justify-end" : "justify-start"
+                  } mb-2`}
+                  key={index}
+                >
+                  <div
+                    className={`${
+                      message.sender === "user"
+                        ? "bg-indigo-400 text-white"
+                        : "bg-gray-200"
+                    } p-2 rounded-md`}
+                  >
+                    {message.text}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <form className="w-full" onSubmit={(e) => handleSubmit(e)}>
+            <div className="flex items-center p-4 bg-gray-100 rounded-b-lg w-full">
+              <input
+                type="text"
+                className="flex-1 border-2 py-2 px-4 focus:outline-none rounded-lg focus:border-indigo-400"
+                onChange={(e) => setMessage(e.target.value)}
+                value={message}
               />
-            </a>
-          </div>
+              <button
+                type="submit"
+                className="p-2 bg-indigo-400 rounded-lg text-white hover:bg-indigo-500"
+              >
+                {isLoading ? "送信中..." : "送信"}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
-          />
-          <div className={styles.thirteen}>
-            <Image
-              src="/thirteen.svg"
-              alt="13"
-              width={40}
-              height={31}
-              priority
-            />
-          </div>
-        </div>
-
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
+      </div>
     </>
-  )
+  );
 }
