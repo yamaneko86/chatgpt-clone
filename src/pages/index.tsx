@@ -7,11 +7,6 @@ export default function Home() {
   const [messages, setMessages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  type Message = {
-    sender: string;
-    text: string;
-  };
-
   const cfg = new Configuration({
     apiKey: process.env.NEXT_PUBLIC_OPENAI_KEY,
   });
